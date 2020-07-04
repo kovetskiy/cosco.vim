@@ -57,17 +57,13 @@ endfunction
 
         " Current line has no specific ending
         call cosco#commaOrSemiColon()
-        call self.assert_equal('two', getline('.'))
-
-        " Current line ends in `,`
-        normal! A,
-        call cosco#commaOrSemiColon()
-        call self.assert_equal('two', getline('.'))
+        call self.assert_equal('two,', getline('.'))
 
         " Current line ends in `;`
-        normal! A;
+        normal! $r;
+
         call cosco#commaOrSemiColon()
-        call self.assert_equal('two', getline('.'))
+        call self.assert_equal('two;', getline('.'))
     endfunction
 
     " Next line is less indent:
@@ -115,7 +111,7 @@ endfunction
         " Current line ends in `;`
         normal! f,r;
         call cosco#commaOrSemiColon()
-        call self.assert_equal('    two,', getline('.'))
+        call self.assert_equal('    two;', getline('.'))
     endfunction
 
 "
@@ -217,4 +213,18 @@ endfunction
         " Current line has no specific ending
         call cosco#commaOrSemiColon()
         call self.assert_equal('function nextLineBrace()', getline('.'))
+    endfunction
+
+    function! s:tc.test_nextStartsWithDot()
+        put! = [
+            \ 'pipeline()',
+            \ '.one()',
+            \ '.two()',
+        \]
+
+        normal! 2G
+
+        " Current line has no specific ending
+        call cosco#commaOrSemiColon()
+        call self.assert_equal('.one()', getline('.'))
     endfunction

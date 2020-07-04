@@ -1,0 +1,29 @@
+#!/bin/bash
+
+cd tests
+
+sid=cosco-vim
+
+tmux kill-session -t $sid &>/dev/null
+tmux new-session -y 300 -d -s $sid vim -u rc.vim test_cosco.vim -c UnitTest
+
+capture() {
+    tmux capture-pane -pt $sid "${@}" | sed '/^\~\s*$/d; /more lines/d'
+}
+
+while :; do
+    result=$(capture)
+    if [[ "$result" =~ "Finished in" ]]; then
+        break
+    fi
+    sleep 0.05
+done
+
+tmux send-keys -t $sid 'C-w'
+tmux send-keys -t $sid 'j'
+tmux send-keys -t $sid 'C-w'
+tmux send-keys -t $sid 'c'
+
+capture
+
+tmux kill-session -t $sid &>/dev/null

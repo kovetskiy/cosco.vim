@@ -54,7 +54,7 @@ function! s:hasUnactionableLines()
     endif
 
     " Ignores empty lines or lines ending with opening ([{
-    if (s:strip(b:currentLine) == '' || b:currentLineLastChar =~ '[{[(]')
+    if (s:strip(b:currentLine) == '' || s:strip(b:currentLine) == '}' || b:currentLineLastChar =~ '[{[(]')
         return 1
     endif
 
@@ -62,6 +62,7 @@ function! s:hasUnactionableLines()
     if b:nextLineFirstChar == '{'
         return 1
     endif
+
 
     " Ignores custom regex patterns given a file type.
     let s:cur_ft = &filetype
@@ -113,7 +114,7 @@ endfunction
 
 function! cosco#removeCommaOrSemiColon()
     if b:currentLineLastChar =~ '[,;]'
-        exec("s/[,;]\\?$//e")
+        keepjumps exec("s/[,;]\\?$//e")
     end
 endfunction
 
@@ -123,7 +124,7 @@ function! cosco#makeItASemiColon()
         return
     endif
 
-    exec("s/[,;]\\?$/;/e")
+    keepjumps exec("s/[,;]\\?$/;/e")
 endfunction
 
 function! cosco#makeItAComma()
@@ -132,7 +133,7 @@ function! cosco#makeItAComma()
         return
     endif
 
-    exec("s/[,;]\\?$/,/e")
+    keepjumps exec("s/[,;]\\?$/,/e")
 endfunction
 
 " ==============
@@ -158,8 +159,6 @@ function! cosco#commaOrSemiColon()
     let b:currentLineFirstChar = matchstr(b:currentLine, '^.')
     let b:currentLineIndentation = indent(b:originalLineNum)
 
-    let b:originalCursorPosition = getpos('.')
-
     let b:nextLine = s:getNextNonBlankLine(b:originalLineNum)
     let b:prevLine = s:getPrevNonBlankLine(b:originalLineNum)
 
@@ -177,7 +176,6 @@ function! cosco#commaOrSemiColon()
     call s:filetypeOverrides()
 
     if (b:wasExtensionExecuted)
-        call setpos('.', b:originalCursorPosition)
         return
     endif
 
@@ -186,7 +184,7 @@ function! cosco#commaOrSemiColon()
             call cosco#makeItAComma()
         elseif b:nextLineIndentation < b:currentLineIndentation
             call cosco#makeItASemiColon()
-        elseif b:nextLineIndentation == b:currentLineIndentation
+        elseif b:nextLineIndentation == b:currentLineIndentation && b:currentLineLastChar != ';'
             call cosco#makeItAComma()
         endif
     elseif b:prevLineLastChar == ';'
@@ -222,9 +220,9 @@ function! cosco#commaOrSemiColon()
         endif
     elseif b:nextLineFirstChar == ']'
         call cosco#removeCommaOrSemiColon()
+    elseif b:nextLineFirstChar == '.'
+        call cosco#removeCommaOrSemiColon()
     else
         call cosco#makeItASemiColon()
     endif
-
-    call setpos('.', b:originalCursorPosition)
 endfunction
